@@ -1,0 +1,120 @@
+:root {
+  --bg: #0f1117;
+  --sidebar: #151820;
+  --card: #1c2030;
+  --border: #2a3048;
+  --accent: #3b82f6;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body.deposito-app {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+@media (max-width: 767px) {
+  #sidebar:not(.is-open) {
+    pointer-events: none;
+  }
+
+  #sidebar.is-open {
+    transform: translateX(0) !important;
+    pointer-events: auto;
+  }
+}
+
+.deposito-transition {
+  transition: all 0.2s ease;
+}
+
+.deposito-sidebar {
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+}
+
+.deposito-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+.deposito-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.badge-pill {
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+#deposito-toast-host {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 22rem;
+  pointer-events: none;
+}
+
+.deposito-toast {
+  pointer-events: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  transform: translateX(120%);
+  opacity: 0;
+  animation: deposito-toast-in 0.35s ease forwards;
+}
+
+.deposito-toast.deposito-toast-out {
+  animation: deposito-toast-out 0.25s ease forwards;
+}
+
+@keyframes deposito-toast-in {
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes deposito-toast-out {
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+.deposito-toast-progress {
+  height: 3px;
+  background: var(--accent);
+  margin-top: 0.5rem;
+  border-radius: 2px;
+  transform-origin: left;
+  animation: deposito-progress 5s linear forwards;
+}
+
+@keyframes deposito-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}

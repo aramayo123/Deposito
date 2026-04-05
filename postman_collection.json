@@ -1,0 +1,189 @@
+{
+  "info": {
+    "name": "Depósito — API y Web",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" },
+    { "key": "csrf_token", "value": "" },
+    { "key": "product_id", "value": "1" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({ key: 'Accept', value: 'application/json' });",
+          "var t = pm.environment.get('csrf_token') || pm.collectionVariables.get('csrf_token');",
+          "if (t) { pm.request.headers.add({ key: 'X-CSRF-TOKEN', value: t }); }"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Productos",
+      "item": [
+        {
+          "name": "GET /api/products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/products"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "var j = pm.response.json();",
+                  "pm.test('tiene data paginada o array', () => pm.expect(j).to.be.an('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/products/{code}/check-code",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/products/NEWCODE/check-code"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('available boolean', () => pm.expect(pm.response.json()).to.have.property('available'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/products/{id}/history",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/products/{{product_id}}/history"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Entradas",
+      "item": [
+        {
+          "name": "GET /api/entries (filtro fechas)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/entries?from=2024-01-01&to=2026-12-31"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Salidas",
+      "item": [
+        {
+          "name": "GET /api/exits?technician=Diego",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/exits?technician=Diego"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/exits?license_plate=ABC123",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/exits?license_plate=ABC123"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('status 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Informes",
+      "item": [
+        {
+          "name": "GET /api/reports/search",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/reports/search?q=test&type=product"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "var j = pm.response.json();",
+                  "pm.test('secciones', () => { pm.expect(j).to.have.property('products'); pm.expect(j).to.have.property('entries'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Alertas",
+      "item": [
+        {
+          "name": "GET /api/stock-alerts",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/stock-alerts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,798 @@
+# PROMPT MAESTRO — SISTEMA DE GESTIÓN DE DEPÓSITO
+## Stack y restricciones técnicas OBLIGATORIAS
+
+Construye una aplicación web completa con:
+- Backend: PHP 8.2 + Laravel 11
+- Base de datos: MySQL 8
+- Frontend: CSS puro + JavaScript vanilla (sin compiladores, sin npm run dev)
+- Estilos: Tailwind CSS vía CDN: <script src="https://cdn.tailwindcss.com"></script>
+- Alertas: SweetAlert2 vía CDN: <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+- NO usar: Vite, Vue, React, Node, npm run dev, webpack, ni ningún bundler
+- Notificaciones push: Implementar con Laravel Broadcasting + Pusher (o Laravel Reverb) + JS nativo
+- Arquitectura: MVC estricto con Laravel, API RESTful interna + vistas Blade
+- Diseño: Moderno, oscuro (dark theme), industrial/minimalista, con sidebar fijo y topbar
+
+---
+
+## DISEÑO VISUAL OBLIGATORIO
+
+El sistema debe tener una estética industrial-tech, dark theme principal:
+- Fondo general: #0f1117 (casi negro)
+- Sidebar: #151820 con íconos y texto claro
+- Cards: #1c2030 con borde sutil #2a3048
+- Acento principal: #3b82f6 (azul eléctrico)
+- Acento secundario: #10b981 (verde éxito)
+- Peligro/dañado: #ef4444
+- Advertencia/stock bajo: #f59e0b
+- Tipografía: 'Inter' via Google Fonts CDN
+- Badges con colores semánticos pill-shaped
+- Tablas con hover destacado y bordes sutiles
+- Animaciones suaves: transiciones 200ms ease
+- Notificaciones push: aparecer desde esquina inferior derecha, con icono, título, mensaje, barra de progreso y botón de cierre — sin usar ninguna librería externa, solo CSS + JS vanilla + Laravel Events
+
+Cada página debe tener:
+1. Sidebar fijo izquierdo (colapsable en mobile)
+2. Topbar con: nombre del sistema, campana de notificaciones (con badge contador), breadcrumb
+3. Contenido principal scrollable
+
+---
+
+## ESTRUCTURA DE CARPETAS Y ARCHIVOS
+
+/app
+  /Http
+    /Controllers
+      ProductController.php
+      ProductEntryController.php
+      ProductExitController.php
+      StockAlertController.php
+      ReportController.php
+      DashboardController.php
+    /Requests
+      StoreProductRequest.php
+      UpdateProductRequest.php
+      StoreEntryRequest.php
+      StoreExitRequest.php
+    /Resources
+      ProductResource.php
+      EntryResource.php
+      ExitResource.php
+  /Models
+    Product.php
+    ProductEntry.php
+    ProductEntryItem.php
+    ProductExit.php
+    ProductExitItem.php
+    StockAlert.php
+    ProductHistory.php
+  /Events
+    LowStockEvent.php
+    ProductMovementEvent.php
+  /Listeners
+    SendLowStockNotification.php
+  /Services
+    HistoryService.php
+    NotificationService.php
+/database
+  /migrations (una por tabla)
+  /seeders
+    DatabaseSeeder.php
+    ProductSeeder.php
+/resources
+  /views
+    /layouts
+      app.blade.php (layout principal con sidebar + topbar)
+    /products
+      index.blade.php
+      create.blade.php
+      edit.blade.php
+      show.blade.php (ficha del producto con historial)
+    /entries
+      index.blade.php
+      create.blade.php
+      show.blade.php
+    /exits
+      index.blade.php
+      create.blade.php
+      show.blade.php
+    /reports
+      global.blade.php
+    /dashboard
+      index.blade.php
+  /js
+    notifications.js
+    product-form.js
+    entry-form.js
+    exit-form.js
+    global-search.js
+  /css
+    app.css (variables y estilos base, sin compilar)
+/routes
+  web.php
+  api.php
+/tests
+  /Feature
+    ProductTest.php
+    EntryTest.php
+    ExitTest.php
+    StockAlertTest.php
+    HistoryTest.php
+  /Unit
+    ProductServiceTest.php
+    HistoryServiceTest.php
+
+---
+
+## BASE DE DATOS — MIGRACIONES COMPLETAS
+
+### Tabla: products
+- id (bigIncrements)
+- product_code (string, unique, not null) -- código obligatorio y único
+- name (string, nullable)                 -- nombre opcional
+- photo (string, nullable)                -- ruta de imagen
+- available_quantity (integer, default 0) -- cantidad disponible (no dañados)
+- damaged_quantity (integer, default 0)   -- cantidad marcada como dañada/mala
+- minimum_stock (integer, default 5)      -- umbral de alerta
+- is_active (boolean, default true)
+- deleted_at (softDeletes)
+- created_at, updated_at
+
+### Tabla: product_entries (tickets de entrada)
+- id (bigIncrements)
+- entry_code (string, unique)  -- código autogenerado tipo ENT-2024-001
+- entry_date (date)
+- entry_time (time)
+- notes (text, nullable)
+- created_by (string, nullable)
+- created_at, updated_at
+
+### Tabla: product_entry_items (ítems de cada ticket de entrada)
+- id
+- product_entry_id (FK -> product_entries)
+- product_id (FK -> products)
+- quantity_received (integer)
+- quantity_damaged (integer, default 0)  -- cuántos llegaron dañados
+- damage_notes (text, nullable)          -- descripción del daño al recibir
+- created_at, updated_at
+
+### Tabla: product_exits (tickets de salida)
+- id (bigIncrements)
+- exit_code (string, unique)   -- código autogenerado tipo SAL-2024-001
+- exit_date (date)
+- exit_time (time)
+- technician_name (string, nullable)    -- nombre del técnico
+- license_plate (string, nullable)      -- patente del vehículo
+- is_for_workshop (boolean, default false) -- checkbox "es para uso del taller"
+- notes (text, nullable)
+- created_by (string, nullable)
+- created_at, updated_at
+
+### Tabla: product_exit_items (ítems de cada ticket de salida)
+- id
+- product_exit_id (FK -> product_exits)
+- product_id (FK -> products)
+- quantity (integer)
+- created_at, updated_at
+
+### Tabla: product_histories (log global de todo movimiento)
+- id
+- product_id (FK -> products)
+- action_type (enum: 'created','updated','entry','exit','damaged_marked','photo_updated')
+- reference_type (string, nullable)  -- 'ProductEntry', 'ProductExit', etc.
+- reference_id (integer, nullable)   -- ID del registro relacionado
+- description (text)                 -- descripción legible del evento
+- technician_name (string, nullable)
+- license_plate (string, nullable)
+- quantity_change (integer, nullable)
+- quantity_before (integer, nullable)
+- quantity_after (integer, nullable)
+- created_at
+
+### Tabla: stock_alerts
+- id
+- product_id (FK)
+- alert_type (enum: 'low_stock','out_of_stock')
+- current_quantity (integer)
+- minimum_stock (integer)
+- is_read (boolean, default false)
+- created_at, updated_at
+
+---
+
+## MODELOS Y RELACIONES
+
+### Product.php
+Relaciones:
+- hasMany(ProductEntryItem::class)
+- hasMany(ProductExitItem::class)
+- hasMany(ProductHistory::class)
+- hasMany(StockAlert::class)
+
+Accessors:
+- getTotalQuantityAttribute()  // available_quantity + damaged_quantity
+- getStockStatusAttribute()    // 'ok' | 'low' | 'critical' | 'out'
+
+Scopes:
+- scopeLowStock($query)        // where available_quantity <= minimum_stock
+- scopeWithDamaged($query)     // where damaged_quantity > 0
+
+Usar SoftDeletes para no perder historial.
+
+### ProductEntry.php
+- hasMany(ProductEntryItem::class)
+- hasManyThrough(Product::class, ProductEntryItem::class)
+- Boot: auto-generar entry_code con formato ENT-YYYY-NNNN
+
+### ProductExit.php
+- hasMany(ProductExitItem::class)
+- Boot: auto-generar exit_code con formato SAL-YYYY-NNNN
+
+---
+
+## MÓDULO 1 — GESTIÓN DE PRODUCTOS
+
+### Vista: products/index.blade.php
+- Tabla con: foto (thumbnail 40x40), código, nombre, disponibles, dañados, stock mínimo, estado (badge), acciones
+- Filtros: búsqueda por código o nombre, filtro por estado de stock, ordenamiento por columna
+- Botón "Nuevo producto"
+- Al hacer hover en la fila: destacar sutilmente
+- Badge de estado: verde=ok, amarillo=stock bajo, rojo=sin stock, naranja=tiene dañados
+
+### Vista: products/create.blade.php y edit.blade.php
+- Campo: código de producto (obligatorio, validar unique al escribir via AJAX)
+- Campo: nombre (opcional)
+- Campo: foto — uploader drag & drop o click, preview inmediata
+- Campo: cantidad disponible (número)
+- Campo: cantidad dañada (número)
+- Campo: stock mínimo
+- Validación en tiempo real con JS nativo
+- SweetAlert2 para confirmaciones y errores
+
+### Vista: products/show.blade.php — FICHA DEL PRODUCTO
+- Header con foto grande, código, nombre, badges de estado
+- Tarjetas de métricas: disponibles, dañados, total, stock mínimo
+- Sección "Actualizar cantidad de dañados": input numérico + botón confirmar con SweetAlert2
+- Sección "Historial completo del producto": timeline visual con todos los eventos
+  - Cada entrada del historial muestra: icono por tipo de acción, fecha/hora, descripción, quién lo hizo, cambio de cantidad (antes → después)
+  - Filtros del historial: por tipo de acción, por rango de fechas
+- Botones de acción rápida: editar, marcar dañados, registrar entrada, registrar salida
+
+### Rutas:
+GET    /products                          -> index
+GET    /products/create                   -> create form
+POST   /products                          -> store
+GET    /products/{id}                     -> show (ficha)
+GET    /products/{id}/edit                -> edit form
+PUT    /products/{id}                     -> update
+DELETE /products/{id}                     -> destroy (soft delete)
+POST   /products/{id}/photo               -> update photo only
+PATCH  /products/{id}/damaged             -> update damaged quantity
+GET    /api/products                      -> JSON list (para búsqueda/autocomplete)
+GET    /api/products/{code}/check-code    -> verificar unicidad de código
+GET    /api/products/{id}/history         -> historial JSON
+
+### Lógica de negocio en ProductController:
+- Al hacer store/update: registrar en product_histories
+- Al actualizar damaged_quantity: registrar evento 'damaged_marked', recalcular available_quantity
+- Al guardar: verificar si available_quantity <= minimum_stock -> crear StockAlert + disparar LowStockEvent
+- Foto: guardar en storage/app/public/products/, generar URL pública
+
+---
+
+## MÓDULO 2 — ENTRADAS DE PRODUCTOS (TICKETS)
+
+### Vista: entries/create.blade.php
+- Campo: fecha de entrada (datepicker, default hoy)
+- Campo: hora
+- Campo: notas generales del ticket
+- Sección dinámica de ítems (agregar/quitar filas con JS):
+  - Cada fila: buscador de producto por código o nombre (autocomplete AJAX), cantidad recibida, cantidad dañada (input separado), notas del daño
+  - Botón "+" para agregar más ítems
+  - Si un ítem tiene cantidad_dañada > 0: mostrar campo de notas del daño (aparece dinámicamente con animación)
+- Preview del ticket antes de guardar
+- Al guardar:
+  - Crear ProductEntry con ítems dentro de una DB::transaction()
+  - Por cada ítem: sumar (quantity_received - quantity_damaged) a Product.available_quantity
+  - Sumar quantity_damaged a Product.damaged_quantity
+  - Registrar en product_histories para cada producto afectado
+  - Verificar stock mínimo y disparar alertas
+
+### Vista: entries/index.blade.php
+- Tabla de tickets: código, fecha, hora, cantidad de ítems, productos involucrados, acciones
+- Filtros: por fecha (desde/hasta), por código de ticket, por código o nombre de producto
+- Paginación (25 por página)
+
+### Vista: entries/show.blade.php
+- Detalle completo del ticket
+- Lista de todos los ítems con foto del producto, código, nombre, cantidad recibida, cantidad dañada, notas
+
+### Rutas:
+GET  /entries         -> index
+GET  /entries/create  -> create form
+POST /entries         -> store
+GET  /entries/{id}    -> show
+
+---
+
+## MÓDULO 3 — SALIDAS DE PRODUCTOS (TICKETS)
+
+### Vista: exits/create.blade.php
+- Campo: fecha de salida (default hoy)
+- Campo: hora
+- Campo: nombre del técnico (texto libre)
+- Campo: patente del vehículo (texto libre, placeholder: ej. ABC123)
+- Checkbox: "Es para uso del taller" — al marcarlo: ocultar campos técnico y patente con animación suave
+- Sección dinámica de ítems (igual que entradas):
+  - Buscador de producto (autocomplete), cantidad a retirar
+  - Validación en tiempo real: no permitir retirar más de available_quantity
+  - Mostrar available_quantity actual junto al producto seleccionado
+- Validación: si is_for_workshop = false -> técnico es obligatorio
+- Al guardar dentro de DB::transaction():
+  - Crear ProductExit con ítems
+  - Restar cantidad de Product.available_quantity
+  - Registrar en product_histories para cada producto
+  - Verificar stock mínimo
+
+### Vista: exits/index.blade.php
+- Tabla: código, fecha, hora, técnico, patente / "Uso taller", cantidad de ítems, acciones
+- Filtros: por fecha, por técnico (nombre), por patente, por código de producto
+
+### Vista: exits/show.blade.php
+- Detalle del ticket con todos los ítems
+
+### Rutas:
+GET  /exits         -> index
+GET  /exits/create  -> create form
+POST /exits         -> store
+GET  /exits/{id}    -> show
+
+---
+
+## MÓDULO 4 — DASHBOARD
+
+### Vista: dashboard/index.blade.php
+- Métricas resumen en cards:
+  - Total de productos distintos
+  - Total de unidades disponibles
+  - Total de unidades dañadas
+  - Productos con stock bajo (clickable -> filtra productos)
+  - Entradas del día
+  - Salidas del día
+- Lista de alertas de stock bajo (últimas 10, con botón "marcar como leída")
+- Últimas 10 entradas
+- Últimas 10 salidas
+- Gráfico simple con Canvas API (JS vanilla): movimientos de los últimos 7 días
+- Usar Cache::remember() para las métricas con TTL de 60 segundos
+
+---
+
+## MÓDULO 5 — HISTORIAL GLOBAL Y BÚSQUEDA AVANZADA
+
+### Vista: reports/global.blade.php
+
+Buscador global con UN campo de búsqueda y selector de tipo:
+- Selector "Buscar por..." con opciones: Producto (código o nombre), Técnico, Patente, Ticket de entrada, Ticket de salida
+- Input de texto
+- Botón buscar
+
+Resultados agrupados por secciones:
+- Sección PRODUCTO: ficha resumida del producto (si existe)
+- Sección ENTRADAS: todos los tickets de entrada que involucran el término
+- Sección SALIDAS: todos los tickets de salida que involucran el término, técnico o patente
+- Sección HISTORIAL: timeline de todos los eventos relacionados
+
+Filtros adicionales tras buscar:
+- Por rango de fechas
+- Por tipo de movimiento (entrada/salida/modificación)
+
+Cada resultado tiene link para ir al detalle completo.
+
+### Rutas:
+GET /reports/global          -> vista
+GET /api/reports/search      -> JSON con resultados (query params: q, type, from, to)
+
+---
+
+## MÓDULO 6 — NOTIFICACIONES PUSH
+
+### Sistema de notificaciones en tiempo real:
+
+Usar Laravel Broadcasting con Laravel Reverb (open source, self-hosted) o Pusher.
+
+Configuración:
+- Instalar via composer los paquetes necesarios
+- Configurar BROADCAST_DRIVER en .env
+- Crear canal deposito-notifications
+
+Eventos a broadcastear:
+1. LowStockEvent: cuando un producto llega al stock mínimo
+2. ProductMovementEvent: cuando hay una entrada o salida registrada
+
+Ambos eventos deben implementar ShouldQueue para procesarse en cola.
+
+Frontend (notifications.js — JS vanilla puro):
+- Conectar al canal y escuchar eventos
+- Mostrar notificación toast personalizada SIN librerías externas
+- Incrementar badge contador en campana del topbar
+- Guardar notificaciones no leídas en localStorage
+- Al hacer click en campana: mostrar panel dropdown con historial de notificaciones
+
+Toast de notificación (CSS + JS puro):
+- Aparece desde esquina inferior derecha con animación slide-in
+- Tiene: icono de color según tipo, título, descripción, barra de progreso animada, botón X
+- Auto-desaparece en 5 segundos
+- Se pueden apilar múltiples toasts
+- Transición de entrada/salida con CSS transforms y opacity
+
+---
+
+## MÓDULO 7 — VALIDACIONES Y SEGURIDAD
+
+### StoreProductRequest:
+- product_code: required|unique:products,product_code|max:50
+- name: nullable|string|max:255
+- photo: nullable|image|mimes:jpg,jpeg,png,webp|max:2048
+- available_quantity: required|integer|min:0
+- damaged_quantity: nullable|integer|min:0
+- minimum_stock: required|integer|min:0
+
+### UpdateProductRequest:
+- product_code: required|unique:products,product_code,{id}|max:50
+- (resto igual que store)
+
+### StoreEntryRequest:
+- entry_date: required|date
+- entry_time: required
+- items: required|array|min:1
+- items.*.product_id: required|exists:products,id
+- items.*.quantity_received: required|integer|min:1
+- items.*.quantity_damaged: nullable|integer|min:0
+- items.*.damage_notes: required_if:items.*.quantity_damaged,>0|nullable|string
+
+### StoreExitRequest:
+- exit_date: required|date
+- exit_time: required
+- technician_name: required_if:is_for_workshop,false|nullable|string
+- license_plate: nullable|string|max:20
+- is_for_workshop: required|boolean
+- items: required|array|min:1
+- items.*.product_id: required|exists:products,id
+- items.*.quantity: required|integer|min:1
+- Validación custom: quantity <= available_quantity del producto (usar withValidator)
+
+### Middleware adicional:
+- EnsureProductHasSufficientStock: validar stock antes de registrar salida
+- Manejo global de errores con respuestas JSON consistentes para rutas /api/*
+
+---
+
+## MÓDULO 8 — TESTING CON POSTMAN
+
+Generar el archivo postman_collection.json con la colección completa exportable.
+
+Variables de entorno Postman:
+- base_url: http://localhost:8000
+- api_prefix: /api
+
+Pre-request Script global de la colección:
+pm.request.headers.add({ key: 'X-CSRF-TOKEN', value: pm.environment.get('csrf_token') });
+pm.request.headers.add({ key: 'Accept', value: 'application/json' });
+
+=== TESTS DE PRODUCTOS ===
+
+1. GET {{base_url}}/api/products — Listar todos
+   Test: status 200, response es array, cada item tiene product_code
+
+2. POST {{base_url}}/products — Crear producto válido
+   Body (form-data): product_code único, available_quantity, minimum_stock
+   Test: status 201 o redirect exitoso, product_code existe en DB
+
+3. POST {{base_url}}/products — Crear con código duplicado (debe fallar)
+   Test: status 422, errors.product_code presente
+
+4. POST {{base_url}}/products — Crear sin product_code (debe fallar)
+   Test: status 422
+
+5. PUT {{base_url}}/products/{id} — Actualizar producto
+   Test: status 200, datos actualizados correctamente
+
+6. PATCH {{base_url}}/products/{id}/damaged — Marcar unidades dañadas
+   Body: { "damaged_quantity": 5 }
+   Test: status 200, damaged_quantity actualizado, available_quantity recalculado
+
+7. GET {{base_url}}/api/products/{id}/history — Historial del producto
+   Test: status 200, es array, cada item tiene action_type
+
+8. GET {{base_url}}/api/products/{code}/check-code — Verificar unicidad de código
+   Test: status 200, response tiene campo 'available' (boolean)
+
+9. DELETE {{base_url}}/products/{id} — Eliminar producto (soft delete)
+   Test: status 200 o 204, producto no aparece en listado pero historial se conserva
+
+=== TESTS DE ENTRADAS ===
+
+10. POST {{base_url}}/entries — Crear ticket de entrada válido
+    Body: entry_date, entry_time, items (array con product_id, quantity_received)
+    Test: status 201 o redirect, available_quantity del producto incrementó
+
+11. POST {{base_url}}/entries — Sin ítems (debe fallar)
+    Test: status 422, error en campo items
+
+12. POST {{base_url}}/entries — Con ítems dañados
+    Body: items con quantity_damaged > 0 y damage_notes
+    Test: damaged_quantity del producto incrementó correctamente
+
+13. GET {{base_url}}/api/entries?from=2024-01-01&to=2024-12-31 — Listar con filtros
+    Test: status 200, resultados filtrados por rango de fechas
+
+14. GET {{base_url}}/entries/{id} — Ver detalle de entrada
+    Test: status 200, tiene items array con detalles de productos
+
+=== TESTS DE SALIDAS ===
+
+15. POST {{base_url}}/exits — Crear salida para técnico
+    Body: technician_name, license_plate, is_for_workshop=false, items
+    Test: status 201, available_quantity del producto decrementó
+
+16. POST {{base_url}}/exits — Salida para taller
+    Body: is_for_workshop=true (sin técnico ni patente), items
+    Test: status 201 exitoso
+
+17. POST {{base_url}}/exits — is_for_workshop=false sin técnico (debe fallar)
+    Test: status 422, errors.technician_name presente
+
+18. POST {{base_url}}/exits — Cantidad mayor al stock disponible (debe fallar)
+    Test: status 422, error de stock insuficiente
+
+19. GET {{base_url}}/api/exits?technician=Diego — Filtrar por técnico
+    Test: status 200, todos los resultados tienen technician_name que contiene "Diego"
+
+20. GET {{base_url}}/api/exits?license_plate=ABC123 — Filtrar por patente
+    Test: status 200, resultados tienen license_plate = ABC123
+
+=== TESTS DE BÚSQUEDA GLOBAL ===
+
+21. GET {{base_url}}/api/reports/search?q=amoladora&type=product
+    Test: status 200, tiene sección products con resultados relevantes
+
+22. GET {{base_url}}/api/reports/search?q=Diego&type=technician
+    Test: status 200, tiene sección exits con técnico Diego
+
+23. GET {{base_url}}/api/reports/search?q=ABC123&type=license_plate
+    Test: status 200, tiene sección exits con patente ABC123
+
+24. GET {{base_url}}/api/reports/search?q=ENT-2024-0001&type=entry_code
+    Test: status 200, tiene entry con ese código exacto
+
+=== TESTS DE ALERTAS DE STOCK ===
+
+25. GET {{base_url}}/api/stock-alerts — Listar alertas no leídas
+    Test: status 200, array de alertas, cada una tiene product_id e is_read=false
+
+26. PATCH {{base_url}}/api/stock-alerts/{id}/read — Marcar alerta como leída
+    Test: status 200, is_read = true
+
+27. POST {{base_url}}/exits (reducir stock hasta mínimo)
+    Test posterior: GET /api/stock-alerts devuelve alerta para ese producto
+
+=== TESTS DE HISTORIAL ===
+
+28. Crear producto -> GET /api/products/{id}/history
+    Test: primer registro tiene action_type='created'
+
+29. Actualizar producto -> GET /api/products/{id}/history
+    Test: aparece registro con action_type='updated'
+
+30. Registrar entrada con ese producto -> GET /api/products/{id}/history
+    Test: aparece registro con action_type='entry', quantity_change positivo
+
+31. Registrar salida con ese producto -> GET /api/products/{id}/history
+    Test: aparece registro con action_type='exit', quantity_change negativo
+
+32. PATCH /products/{id}/damaged -> GET /api/products/{id}/history
+    Test: aparece registro con action_type='damaged_marked'
+
+=== TESTS DE PERFORMANCE (ESCALABILIDAD) ===
+
+33. Con seeder de 10.000 productos -> GET /api/products debe responder < 500ms
+    Test: pm.expect(pm.response.responseTime).to.be.below(500)
+
+34. Con 50.000 registros de historial -> búsqueda global responde < 1000ms
+    Test: pm.expect(pm.response.responseTime).to.be.below(1000)
+
+35. POST /entries con 50 ítems distintos -> debe procesarse en una sola transacción
+    Test: status 201, todos los productos actualizados, o ninguno si falla alguno
+
+---
+
+## TESTS PHP — Feature y Unit
+
+### ProductTest.php (Feature)
+- test_can_create_product_with_valid_data()
+- test_cannot_create_product_without_code()
+- test_product_code_must_be_unique()
+- test_can_update_damaged_quantity()
+- test_damaged_update_recalculates_available_quantity()
+- test_low_stock_alert_is_created_when_below_minimum()
+- test_can_upload_product_photo()
+- test_product_history_is_recorded_on_create()
+- test_product_history_is_recorded_on_update()
+- test_soft_delete_preserves_history()
+
+### EntryTest.php (Feature)
+- test_can_create_entry_ticket_with_multiple_items()
+- test_entry_increments_product_available_quantity()
+- test_entry_with_damaged_items_increments_damaged_quantity()
+- test_entry_creates_history_for_each_product()
+- test_cannot_create_entry_without_items()
+- test_entry_code_is_auto_generated()
+- test_entry_is_wrapped_in_transaction()
+
+### ExitTest.php (Feature)
+- test_can_create_exit_for_technician()
+- test_can_create_exit_for_workshop()
+- test_exit_decrements_available_quantity()
+- test_cannot_exit_more_than_available_stock()
+- test_exit_requires_technician_when_not_workshop()
+- test_exit_creates_history_for_each_product()
+- test_exit_code_is_auto_generated()
+- test_can_filter_exits_by_technician()
+- test_can_filter_exits_by_license_plate()
+
+### HistoryTest.php (Feature)
+- test_can_search_global_by_product_name()
+- test_can_search_global_by_product_code()
+- test_can_search_global_by_technician()
+- test_can_search_global_by_license_plate()
+- test_can_search_global_by_entry_code()
+- test_can_search_global_by_exit_code()
+- test_product_history_shows_all_movements_in_order()
+
+### StockAlertTest.php (Feature)
+- test_alert_created_when_stock_reaches_minimum()
+- test_alert_created_when_stock_is_zero()
+- test_can_mark_alert_as_read()
+- test_no_duplicate_alerts_for_same_product()
+
+### HistoryServiceTest.php (Unit)
+- test_records_entry_event_correctly()
+- test_records_exit_event_correctly()
+- test_records_damaged_event_correctly()
+- test_quantity_before_and_after_are_correct()
+
+---
+
+## CONSIDERACIONES DE ESCALABILIDAD — OBLIGATORIAS
+
+Implementar desde el inicio sin excepción:
+
+1. ÍNDICES EN DB: agregar índices en:
+   - products: product_code, deleted_at
+   - product_exits: technician_name, license_plate, exit_date
+   - product_entries: entry_date
+   - product_histories: product_id, action_type, created_at, technician_name, license_plate
+   - stock_alerts: product_id, is_read
+
+2. PAGINACIÓN: TODAS las listas usan paginate(25). Nunca usar get() o all() en listados.
+
+3. EAGER LOADING: usar with() en todas las queries que accedan a relaciones.
+   Ejemplos:
+   - ProductEntry::with(['items.product'])->paginate(25)
+   - ProductExit::with(['items.product'])->paginate(25)
+   - Product::with(['stockAlerts'])->paginate(25)
+
+4. TRANSACCIONES DB: envolver en DB::transaction() toda operación que modifique múltiples tablas.
+   Obligatorio en: store de entries, store de exits, update de damaged_quantity.
+
+5. QUEUE: los eventos LowStockEvent y ProductMovementEvent implementan ShouldQueue.
+   Configurar QUEUE_CONNECTION=database en .env y crear tabla de jobs.
+
+6. CACHÉ: el DashboardController usa Cache::remember() para métricas con TTL 60 segundos.
+   Invalidar caché al registrar nuevas entradas o salidas.
+
+7. ELOQUENT SCOPES: usar scopes para filtros reutilizables en lugar de repetir queries.
+
+8. SOFT DELETES: implementar en Product model con SoftDeletes trait.
+
+9. API RESOURCES: usar Laravel API Resources para todas las respuestas JSON.
+   Nunca retornar modelos Eloquent directamente en las respuestas API.
+
+10. SELECT ESPECÍFICO: en queries de listado usar select() para traer solo columnas necesarias.
+    Evitar SELECT * en tablas con muchas columnas o con columnas de texto/blob grandes.
+
+---
+
+## SEEDERS — DATOS DE PRUEBA
+
+### ProductSeeder.php
+Crear 50 productos con datos realistas de depósito:
+- Herramientas eléctricas: taladros, amoladora, hidrolavadoras, etc.
+- Herramientas manuales: mechas, cintas, tornillos, etc.
+- Algunos con stock bajo (below minimum_stock)
+- Algunos con damaged_quantity > 0
+- Algunos sin nombre (solo código)
+- Fotos: usar placeholder images
+
+### DatabaseSeeder.php
+Además de productos, crear:
+- 20 tickets de entrada con ítems variados
+- 30 tickets de salida asignados a técnicos ficticios con patentes ficticias
+- 5 salidas para uso del taller
+- Historial resultante de todas esas operaciones
+- Alertas de stock no leídas para algunos productos
+
+---
+
+## FLUJO DE TRABAJO PARA CURSOR — ORDEN ESTRICTO
+
+Construir en este orden. Completar y verificar cada paso antes de continuar:
+
+PASO 1: Migraciones — crear todas las tablas en el orden correcto (respetando FK)
+PASO 2: Modelos con relaciones, accessors, scopes y SoftDeletes
+PASO 3: Seeders con datos realistas
+PASO 4: Services — HistoryService y NotificationService
+PASO 5: Form Requests con todas las validaciones
+PASO 6: API Resources
+PASO 7: Controllers — empezar por ProductController completo
+PASO 8: Rutas en web.php y api.php
+PASO 9: Layout principal Blade (app.blade.php con sidebar + topbar + toast notifications CSS/JS)
+PASO 10: Vistas de productos (index -> create/edit -> show con historial timeline)
+PASO 11: EntryController + vistas de entradas con formulario dinámico JS
+PASO 12: ExitController + vistas de salidas con formulario dinámico JS
+PASO 13: DashboardController + vista con métricas y gráfico canvas
+PASO 14: ReportController + búsqueda global
+PASO 15: Events, Listeners y Broadcasting (Laravel Reverb)
+PASO 16: notifications.js — toasts y panel de notificaciones
+PASO 17: Tests PHP Feature y Unit
+PASO 18: postman_collection.json con todos los tests documentados
+PASO 19: README.md con instrucciones completas
+
+IMPORTANTE: Al terminar cada paso ejecutar php artisan test para verificar que no se rompió nada antes de continuar.
+
+---
+
+## README.md — CONTENIDO REQUERIDO
+
+Generar README.md con:
+
+### Requisitos del sistema
+- PHP 8.2+
+- MySQL 8+
+- Composer 2+
+- Extensiones PHP: pdo_mysql, gd, fileinfo, mbstring
+
+### Instalación paso a paso
+1. git clone o descomprimir el proyecto
+2. composer install
+3. cp .env.example .env
+4. php artisan key:generate
+5. Configurar DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD en .env
+6. Configurar BROADCAST_DRIVER y credenciales de Reverb/Pusher en .env
+7. php artisan migrate --seed
+8. php artisan storage:link
+9. php artisan queue:work (en terminal separada, para notificaciones)
+10. php artisan reverb:start (si se usa Reverb, en terminal separada)
+11. php artisan serve
+12. Abrir http://localhost:8000
+
+### Correr tests PHP
+php artisan test
+php artisan test --coverage
+
+### Importar colección Postman
+1. Abrir Postman
+2. Import -> File -> seleccionar postman_collection.json
+3. Configurar environment con base_url=http://localhost:8000
+4. Para tests que requieren CSRF: primero hacer GET / y capturar el token
+
+### Variables de entorno importantes
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=deposito
+DB_USERNAME=root
+DB_PASSWORD=
+BROADCAST_DRIVER=reverb (o pusher)
+QUEUE_CONNECTION=database
+FILESYSTEM_DISK=public
+MAX_FILE_SIZE=2048
