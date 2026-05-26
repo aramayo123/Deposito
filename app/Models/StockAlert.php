@@ -15,15 +15,6 @@ class StockAlert extends Model
         'is_read',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'current_quantity' => 'integer',
-            'minimum_stock' => 'integer',
-            'is_read' => 'boolean',
-        ];
-    }
-
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

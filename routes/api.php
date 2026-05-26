@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DepositController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductEntryController;
 use App\Http\Controllers\ProductExitController;
@@ -13,6 +14,8 @@ Route::get('products/{code}/check-code', [ProductController::class, 'checkCode']
 
 Route::get('entries', [ProductEntryController::class, 'apiIndex']);
 Route::get('exits', [ProductExitController::class, 'apiIndex']);
+
+Route::get('deposits', [DepositController::class, 'apiIndex']);
 
 Route::get('reports/search', [ReportController::class, 'apiSearch']);
 

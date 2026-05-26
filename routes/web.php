@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DepositController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RunQueuedJobsController;
 use App\Http\Controllers\ProductEntryController;
@@ -32,5 +33,7 @@ Route::post('exits', [ProductExitController::class, 'store'])
 Route::get('exits/{product_exit}', [ProductExitController::class, 'show'])->name('exits.show');
 
 Route::get('reports/global', [ReportController::class, 'global'])->name('reports.global');
+
+Route::resource('deposits', DepositController::class);
 
 Route::patch('stock-alerts/{stock_alert}/read', [StockAlertController::class, 'markRead'])->name('stock-alerts.read');

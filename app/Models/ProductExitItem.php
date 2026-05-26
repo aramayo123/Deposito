@@ -13,13 +13,6 @@ class ProductExitItem extends Model
         'quantity',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'quantity' => 'integer',
-        ];
-    }
-
     public function exit(): BelongsTo
     {
         return $this->belongsTo(ProductExit::class, 'product_exit_id');

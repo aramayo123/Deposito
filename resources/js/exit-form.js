@@ -59,8 +59,8 @@
       }, 300);
     });
     qty?.addEventListener("input", () => {
-      const max = parseInt(tr.dataset.max || "0", 10);
-      const v = parseInt(qty.value, 10) || 0;
+      const max = parseFloat(tr.dataset.max || "0");
+      const v = parseFloat(qty.value) || 0;
       if (max && v > max) {
         qty.setCustomValidity("Supera stock disponible");
       } else {

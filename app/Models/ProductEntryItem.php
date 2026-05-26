@@ -15,14 +15,6 @@ class ProductEntryItem extends Model
         'damage_notes',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'quantity_received' => 'integer',
-            'quantity_damaged' => 'integer',
-        ];
-    }
-
     public function entry(): BelongsTo
     {
         return $this->belongsTo(ProductEntry::class, 'product_entry_id');

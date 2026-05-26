@@ -21,16 +21,6 @@ class Product extends Model
         'is_active',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'available_quantity' => 'integer',
-            'damaged_quantity' => 'integer',
-            'minimum_stock' => 'integer',
-            'is_active' => 'boolean',
-        ];
-    }
-
     public function entryItems(): HasMany
     {
         return $this->hasMany(ProductEntryItem::class);
@@ -51,20 +41,20 @@ class Product extends Model
         return $this->hasMany(StockAlert::class);
     }
 
-    public function getTotalQuantityAttribute(): int
+    public function getTotalQuantityAttribute(): float
     {
-        return (int) $this->available_quantity + (int) $this->damaged_quantity;
+        return (float) $this->available_quantity + (float) $this->damaged_quantity;
     }
 
     public function getStockStatusAttribute(): string
     {
-        if ((int) $this->available_quantity <= 0) {
+        if ((float) $this->available_quantity <= 0) {
             return 'out';
         }
-        if ((int) $this->available_quantity <= (int) $this->minimum_stock) {
+        if ((float) $this->available_quantity <= (float) $this->minimum_stock) {
             return 'low';
         }
-        if ((int) $this->damaged_quantity > 0) {
+        if ((float) $this->damaged_quantity > 0) {
             return 'damaged';
         }
 

@@ -33,17 +33,17 @@
         <div class="grid gap-4 sm:grid-cols-3">
             <div>
                 <label class="text-sm text-gray-400">Disponibles</label>
-                <input type="number" name="available_quantity" min="0" required value="{{ old('available_quantity', 0) }}"
+                <input type="number" step="0.001" name="available_quantity" min="0" required value="{{ old('available_quantity', 0) }}"
                        class="mt-1 w-full rounded-lg border border-dep-border bg-dep-bg px-3 py-2 text-sm text-white">
             </div>
             <div>
                 <label class="text-sm text-gray-400">Dañados</label>
-                <input type="number" name="damaged_quantity" min="0" value="{{ old('damaged_quantity', 0) }}"
+                <input type="number" step="0.001" name="damaged_quantity" min="0" value="{{ old('damaged_quantity', 0) }}"
                        class="mt-1 w-full rounded-lg border border-dep-border bg-dep-bg px-3 py-2 text-sm text-white">
             </div>
             <div>
                 <label class="text-sm text-gray-400">Stock mínimo</label>
-                <input type="number" name="minimum_stock" min="0" required value="{{ old('minimum_stock', 5) }}"
+                <input type="number" step="0.001" name="minimum_stock" min="0" required value="{{ old('minimum_stock', 5) }}"
                        class="mt-1 w-full rounded-lg border border-dep-border bg-dep-bg px-3 py-2 text-sm text-white">
             </div>
         </div>

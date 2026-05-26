@@ -20,24 +20,20 @@ class ProductHistory extends Model
         'description',
         'technician_name',
         'license_plate',
+        'deposit_id',
         'quantity_change',
         'quantity_before',
         'quantity_after',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'created_at' => 'datetime',
-            'quantity_change' => 'integer',
-            'quantity_before' => 'integer',
-            'quantity_after' => 'integer',
-        ];
-    }
-
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function deposit(): BelongsTo
+    {
+        return $this->belongsTo(Deposit::class);
     }
 
     public function getActionLabelEsAttribute(): string

@@ -15,7 +15,11 @@ class ExitResource extends JsonResource
             'exit_date' => $this->exit_date?->format('Y-m-d'),
             'exit_time' => $this->exit_time,
             'technician_name' => $this->technician_name,
-            'license_plate' => $this->license_plate,
+            'deposit_id' => $this->deposit_id,
+            'deposit' => $this->whenLoaded('deposit', fn () => [
+                'id' => $this->deposit->id,
+                'name' => $this->deposit->name,
+            ]),
             'is_for_workshop' => (bool) $this->is_for_workshop,
             'notes' => $this->notes,
             'created_by' => $this->created_by,

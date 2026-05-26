@@ -9,7 +9,7 @@
             <input type="date" name="from" value="{{ request('from') }}" class="rounded-lg border border-dep-border bg-dep-card px-2 py-1 text-white">
             <input type="date" name="to" value="{{ request('to') }}" class="rounded-lg border border-dep-border bg-dep-card px-2 py-1 text-white">
             <input type="text" name="technician" value="{{ request('technician') }}" placeholder="Técnico" class="rounded-lg border border-dep-border bg-dep-card px-2 py-1 text-white">
-            <input type="text" name="license_plate" value="{{ request('license_plate') }}" placeholder="Patente" class="rounded-lg border border-dep-border bg-dep-card px-2 py-1 text-white">
+            <input type="text" name="deposit" value="{{ request('deposit') }}" placeholder="Depósito" class="rounded-lg border border-dep-border bg-dep-card px-2 py-1 text-white">
             <input type="text" name="product" value="{{ request('product') }}" placeholder="Producto" class="rounded-lg border border-dep-border bg-dep-card px-2 py-1 text-white">
             <button type="submit" class="rounded-lg bg-blue-600 px-3 py-1 text-white">Filtrar</button>
         </form>
@@ -22,7 +22,7 @@
                     <th class="p-3">Código</th>
                     <th class="p-3">Fecha</th>
                     <th class="p-3">Técnico / Taller</th>
-                    <th class="p-3">Patente</th>
+                    <th class="p-3">Depósito</th>
                     <th class="p-3">Ítems</th>
                     <th class="p-3"></th>
                 </tr>
@@ -39,7 +39,7 @@
                                 {{ $x->technician_name ?? '—' }}
                             @endif
                         </td>
-                        <td class="p-3">{{ $x->license_plate ?? '—' }}</td>
+                        <td class="p-3">{{ $x->deposit?->name ?? '—' }}</td>
                         <td class="p-3">{{ $x->items_count }}</td>
                         <td class="p-3"><a href="{{ route('exits.show', $x) }}" class="text-blue-400 hover:underline">Ver</a></td>
                     </tr>

@@ -48,7 +48,7 @@
       }, 300);
     });
     qd?.addEventListener("input", () => {
-      const n = parseInt(qd.value, 10) || 0;
+      const n = parseFloat(qd.value) || 0;
       notesWrap.classList.toggle("hidden", n <= 0);
       notesWrap.classList.toggle("opacity-0", n <= 0);
     });

@@ -11,7 +11,7 @@
                 <select name="type" class="mt-1 w-full rounded-lg border border-dep-border bg-dep-bg px-3 py-2 text-sm text-white">
                     <option value="product">Producto (código o nombre)</option>
                     <option value="technician">Técnico</option>
-                    <option value="license_plate">Patente</option>
+                    <option value="deposit">Depósito</option>
                     <option value="entry_code">Ticket de entrada</option>
                     <option value="exit_code">Ticket de salida</option>
                 </select>

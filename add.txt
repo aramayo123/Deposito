@@ -1,0 +1,3 @@
+php artisan migrate --path=/database/migrations/2025_05_25_100000_create_deposits_table.php
+php artisan migrate --path=/database/migrations/2025_05_25_100001_convert_quantities_to_decimal.php
+php artisan migrate --path=/database/migrations/2025_05_25_100002_add_deposit_id_to_exits_and_histories.php

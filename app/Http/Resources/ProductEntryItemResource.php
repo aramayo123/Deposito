@@ -12,8 +12,8 @@ class ProductEntryItemResource extends JsonResource
         return [
             'id' => $this->id,
             'product_id' => $this->product_id,
-            'quantity_received' => (int) $this->quantity_received,
-            'quantity_damaged' => (int) $this->quantity_damaged,
+            'quantity_received' => (float) $this->quantity_received,
+            'quantity_damaged' => (float) $this->quantity_damaged,
             'damage_notes' => $this->damage_notes,
             'product' => new ProductResource($this->whenLoaded('product')),
         ];

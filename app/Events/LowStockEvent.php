@@ -43,11 +43,11 @@ class LowStockEvent implements ShouldBroadcast, ShouldQueue
             'minimum_stock' => $this->product->minimum_stock,
             'title' => 'Alerta de stock',
             'message' => sprintf(
-                '%s (%s): %d unidades (mínimo %d)',
+                '%s (%s): %s unidades (mínimo %s)',
                 $this->product->product_code,
                 $this->product->name ?? '—',
-                $this->product->available_quantity,
-                $this->product->minimum_stock
+                rtrim(rtrim(number_format((float) $this->product->available_quantity, 3, '.', ''), '0'), '.'),
+                rtrim(rtrim(number_format((float) $this->product->minimum_stock, 3, '.', ''), '0'), '.'),
             ),
         ];
     }

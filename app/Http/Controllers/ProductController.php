@@ -85,7 +85,7 @@ class ProductController extends Controller
             return (new ProductResource($product))->response()->setStatusCode(201);
         }
 
-        return redirect()->route('products.show', $product)->with('success', 'Producto creado.');
+        return redirect()->route('products.show', $product)->with('success', 'Producto creado correctamente.');
     }
 
     public function show(Request $request, Product $product): View|JsonResponse
@@ -146,7 +146,7 @@ class ProductController extends Controller
             return (new ProductResource($product))->response();
         }
 
-        return redirect()->route('products.show', $product)->with('success', 'Producto actualizado.');
+        return redirect()->route('products.show', $product)->with('success', 'Producto actualizado correctamente.');
     }
 
     public function destroy(Request $request, Product $product): RedirectResponse|JsonResponse
@@ -158,13 +158,18 @@ class ProductController extends Controller
             return response()->json(null, 204);
         }
 
-        return redirect()->route('products.index')->with('success', 'Producto eliminado.');
+        return redirect()->route('products.index')->with('success', 'Producto eliminado correctamente.');
     }
 
     public function updatePhoto(Request $request, Product $product): RedirectResponse|JsonResponse
     {
         $request->validate([
             'photo' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'photo.required' => 'La foto es obligatoria.',
+            'photo.image' => 'El archivo debe ser una imagen.',
+            'photo.mimes' => 'La foto debe ser JPG, JPEG, PNG o WebP.',
+            'photo.max' => 'La foto no puede superar los 2 MB.',
         ]);
         if ($product->photo) {
             Storage::disk('public')->delete($product->photo);
@@ -187,19 +192,23 @@ class ProductController extends Controller
     public function updateDamaged(Request $request, Product $product): RedirectResponse|JsonResponse
     {
         $request->validate([
-            'damaged_quantity' => 'required|integer|min:0',
+            'damaged_quantity' => 'required|numeric|min:0',
+        ], [
+            'damaged_quantity.required' => 'La cantidad dañada es obligatoria.',
+            'damaged_quantity.numeric' => 'La cantidad dañada debe ser un número.',
+            'damaged_quantity.min' => 'La cantidad dañada no puede ser negativa.',
         ]);
-        $newDamaged = (int) $request->input('damaged_quantity');
-        $oldDamaged = (int) $product->damaged_quantity;
+        $newDamaged = (float) $request->input('damaged_quantity');
+        $oldDamaged = (float) $product->damaged_quantity;
         $delta = $newDamaged - $oldDamaged;
-        $beforeAvailable = (int) $product->available_quantity;
+        $beforeAvailable = (float) $product->available_quantity;
         $afterAvailable = $beforeAvailable - $delta;
         if ($afterAvailable < 0) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'No hay suficientes unidades disponibles para marcar como dañadas.'], 422);
             }
 
-            return back()->withErrors(['damaged_quantity' => 'No hay suficientes unidades disponibles.'])->withInput();
+            return back()->withErrors(['damaged_quantity' => 'No hay suficientes unidades disponibles para marcar como dañadas.'])->withInput();
         }
 
         DB::transaction(function () use ($product, $newDamaged, $delta, $oldDamaged, $beforeAvailable, $afterAvailable) {
@@ -208,7 +217,7 @@ class ProductController extends Controller
                 'damaged_quantity' => $newDamaged,
                 'available_quantity' => $afterAvailable,
             ]);
-            $afterDamaged = (int) $product->damaged_quantity;
+            $afterDamaged = (float) $product->damaged_quantity;
             $this->historyService->recordDamaged(
                 $product,
                 $delta,
@@ -270,7 +279,7 @@ class ProductController extends Controller
             $q->whereDate('created_at', '<=', $request->get('to'));
         }
 
-        $items = $q->get(['id', 'product_id', 'action_type', 'reference_type', 'reference_id', 'description', 'technician_name', 'license_plate', 'quantity_change', 'quantity_before', 'quantity_after', 'created_at']);
+        $items = $q->get(['id', 'product_id', 'action_type', 'reference_type', 'reference_id', 'description', 'technician_name', 'license_plate', 'deposit_id', 'quantity_change', 'quantity_before', 'quantity_after', 'created_at']);
 
         return response()->json($items->map(function ($row) {
             return array_merge($row->toArray(), [

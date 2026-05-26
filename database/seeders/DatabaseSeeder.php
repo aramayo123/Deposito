@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Deposit;
 use App\Models\Product;
 use App\Models\ProductEntry;
 use App\Models\ProductEntryItem;
@@ -19,11 +20,15 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(ProductSeeder::class);
 
+        $depo1 = Deposit::query()->create(['name' => 'Taller Mecánico']);
+        $depo2 = Deposit::query()->create(['name' => 'Pañol Eléctrico']);
+        $depo3 = Deposit::query()->create(['name' => 'Depósito Obra Norte']);
+        $deposits = [$depo1, $depo2, $depo3];
+
         $history = app(HistoryService::class);
         $notif = app(NotificationService::class);
 
         $technicians = ['Diego López', 'María García', 'Carlos Ruiz', 'Ana Martínez'];
-        $plates = ['ABC123', 'XYZ789', 'MNO456', 'QWE321'];
 
         for ($e = 0; $e < 20; $e++) {
             DB::transaction(function () use ($history, $notif, $e) {
@@ -49,8 +54,8 @@ class DatabaseSeeder extends Seeder
                         'quantity_damaged' => $dam,
                         'damage_notes' => $dam > 0 ? 'Embalaje deteriorado' : null,
                     ]);
-                    $beforeA = (int) $product->available_quantity;
-                    $beforeD = (int) $product->damaged_quantity;
+                    $beforeA = (float) $product->available_quantity;
+                    $beforeD = (float) $product->damaged_quantity;
                     $product->update([
                         'available_quantity' => $beforeA + $good,
                         'damaged_quantity' => $beforeD + $dam,
@@ -71,13 +76,13 @@ class DatabaseSeeder extends Seeder
         }
 
         for ($x = 0; $x < 35; $x++) {
-            DB::transaction(function () use ($history, $notif, $x, $technicians, $plates) {
+            DB::transaction(function () use ($history, $notif, $x, $technicians, $deposits) {
                 $workshop = $x >= 30;
                 $exit = ProductExit::query()->create([
                     'exit_date' => now()->subDays(random_int(0, 45))->toDateString(),
                     'exit_time' => sprintf('%02d:%02d:00', random_int(8, 18), random_int(0, 59)),
                     'technician_name' => $workshop ? null : $technicians[array_rand($technicians)],
-                    'license_plate' => $workshop ? null : $plates[array_rand($plates)],
+                    'deposit_id' => $workshop ? null : $deposits[array_rand($deposits)]->id,
                     'is_for_workshop' => $workshop,
                     'notes' => null,
                     'created_by' => 'Seeder',
@@ -88,14 +93,15 @@ class DatabaseSeeder extends Seeder
                     if (! $product) {
                         return;
                     }
-                    $max = (int) $product->available_quantity;
-                    $qty = random_int(1, min(5, $max));
+                    $max = (float) $product->available_quantity;
+                    $qty = min(5.0, floor($max));
+                    $qty = max(1, $qty);
                     ProductExitItem::query()->create([
                         'product_exit_id' => $exit->id,
                         'product_id' => $product->id,
                         'quantity' => $qty,
                     ]);
-                    $beforeA = (int) $product->available_quantity;
+                    $beforeA = (float) $product->available_quantity;
                     $afterA = $beforeA - $qty;
                     $product->update(['available_quantity' => $afterA]);
                     $history->recordExit(
@@ -105,7 +111,7 @@ class DatabaseSeeder extends Seeder
                         $beforeA,
                         $afterA,
                         $exit->technician_name,
-                        $exit->license_plate,
+                        $exit->deposit_id,
                     );
                     $notif->syncStockAlertsAndDispatch($product->fresh());
                 }
@@ -116,7 +122,7 @@ class DatabaseSeeder extends Seeder
             StockAlert::query()->firstOrCreate(
                 [
                     'product_id' => $p->id,
-                    'alert_type' => $p->available_quantity <= 0 ? 'out_of_stock' : 'low_stock',
+                    'alert_type' => (float) $p->available_quantity <= 0 ? 'out_of_stock' : 'low_stock',
                     'is_read' => false,
                 ],
                 [

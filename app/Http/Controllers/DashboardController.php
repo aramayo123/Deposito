@@ -18,8 +18,8 @@ class DashboardController extends Controller
 
             return [
                 'products_count' => Product::query()->count(),
-                'available_sum' => (int) Product::query()->sum('available_quantity'),
-                'damaged_sum' => (int) Product::query()->sum('damaged_quantity'),
+                'available_sum' => (float) Product::query()->sum('available_quantity'),
+                'damaged_sum' => (float) Product::query()->sum('damaged_quantity'),
                 'low_stock_count' => Product::query()->lowStock()->count(),
                 'entries_today' => ProductEntry::query()->whereDate('entry_date', $today)->count(),
                 'exits_today' => ProductExit::query()->whereDate('exit_date', $today)->count(),

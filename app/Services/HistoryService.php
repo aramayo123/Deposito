@@ -13,11 +13,12 @@ class HistoryService
         string $description,
         ?string $referenceType = null,
         ?int $referenceId = null,
-        ?int $quantityChange = null,
-        ?int $quantityBefore = null,
-        ?int $quantityAfter = null,
+        ?float $quantityChange = null,
+        ?float $quantityBefore = null,
+        ?float $quantityAfter = null,
         ?string $technicianName = null,
         ?string $licensePlate = null,
+        ?int $depositId = null,
     ): ProductHistory {
         return $product->histories()->create([
             'action_type' => $actionType,
@@ -26,6 +27,7 @@ class HistoryService
             'description' => $description,
             'technician_name' => $technicianName,
             'license_plate' => $licensePlate,
+            'deposit_id' => $depositId,
             'quantity_change' => $quantityChange,
             'quantity_before' => $quantityBefore,
             'quantity_after' => $quantityAfter,
@@ -35,12 +37,12 @@ class HistoryService
     public function recordEntry(
         Product $product,
         int $referenceId,
-        int $addedGood,
-        int $addedDamaged,
-        int $beforeAvailable,
-        int $afterAvailable,
-        int $beforeDamaged,
-        int $afterDamaged,
+        float $addedGood,
+        float $addedDamaged,
+        float $beforeAvailable,
+        float $afterAvailable,
+        float $beforeDamaged,
+        float $afterDamaged,
     ): ProductHistory {
         $desc = "Entrada: +{$addedGood} disponibles".($addedDamaged > 0 ? ", +{$addedDamaged} dañados" : '');
 
@@ -59,11 +61,11 @@ class HistoryService
     public function recordExit(
         Product $product,
         int $referenceId,
-        int $removed,
-        int $beforeAvailable,
-        int $afterAvailable,
+        float $removed,
+        float $beforeAvailable,
+        float $afterAvailable,
         ?string $technicianName = null,
-        ?string $licensePlate = null,
+        ?int $depositId = null,
     ): ProductHistory {
         return $this->record(
             $product,
@@ -75,17 +77,18 @@ class HistoryService
             $beforeAvailable,
             $afterAvailable,
             $technicianName,
-            $licensePlate,
+            null,
+            $depositId,
         );
     }
 
     public function recordDamaged(
         Product $product,
-        int $deltaDamaged,
-        int $beforeAvailable,
-        int $afterAvailable,
-        int $beforeDamaged,
-        int $afterDamaged,
+        float $deltaDamaged,
+        float $beforeAvailable,
+        float $afterAvailable,
+        float $beforeDamaged,
+        float $afterDamaged,
     ): ProductHistory {
         return $this->record(
             $product,

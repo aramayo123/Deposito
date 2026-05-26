@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductExit extends Model
@@ -12,7 +13,7 @@ class ProductExit extends Model
         'exit_date',
         'exit_time',
         'technician_name',
-        'license_plate',
+        'deposit_id',
         'is_for_workshop',
         'notes',
         'created_by',
@@ -48,5 +49,10 @@ class ProductExit extends Model
     public function items(): HasMany
     {
         return $this->hasMany(ProductExitItem::class);
+    }
+
+    public function deposit(): BelongsTo
+    {
+        return $this->belongsTo(Deposit::class);
     }
 }

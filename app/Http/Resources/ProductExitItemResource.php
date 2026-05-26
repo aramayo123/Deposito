@@ -12,7 +12,7 @@ class ProductExitItemResource extends JsonResource
         return [
             'id' => $this->id,
             'product_id' => $this->product_id,
-            'quantity' => (int) $this->quantity,
+            'quantity' => (float) $this->quantity,
             'product' => new ProductResource($this->whenLoaded('product')),
         ];
     }

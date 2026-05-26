@@ -70,8 +70,8 @@ class ProductEntryController extends Controller
 
             foreach ($request->validated('items') as $row) {
                 $productId = (int) $row['product_id'];
-                $qtyRec = (int) $row['quantity_received'];
-                $qtyDam = (int) ($row['quantity_damaged'] ?? 0);
+                $qtyRec = (float) $row['quantity_received'];
+                $qtyDam = (float) ($row['quantity_damaged'] ?? 0);
                 $good = $qtyRec - $qtyDam;
 
                 ProductEntryItem::query()->create([
@@ -83,8 +83,8 @@ class ProductEntryController extends Controller
                 ]);
 
                 $product = Product::query()->lockForUpdate()->findOrFail($productId);
-                $beforeA = (int) $product->available_quantity;
-                $beforeD = (int) $product->damaged_quantity;
+                $beforeA = (float) $product->available_quantity;
+                $beforeD = (float) $product->damaged_quantity;
                 $afterA = $beforeA + $good;
                 $afterD = $beforeD + $qtyDam;
                 $product->update([
@@ -121,7 +121,7 @@ class ProductEntryController extends Controller
             return (new EntryResource($entry))->response()->setStatusCode(201);
         }
 
-        return redirect()->route('entries.show', $entry)->with('success', 'Entrada registrada.');
+        return redirect()->route('entries.show', $entry)->with('success', 'Entrada registrada correctamente.');
     }
 
     public function show(ProductEntry $entry): View

@@ -31,9 +31,13 @@
                            class="mt-1 w-full rounded-lg border border-dep-border bg-dep-bg px-3 py-2 text-sm text-white">
                 </div>
                 <div>
-                    <label class="text-sm text-gray-400">Patente</label>
-                    <input type="text" name="license_plate" value="{{ old('license_plate') }}" placeholder="ej. ABC123"
-                           class="mt-1 w-full rounded-lg border border-dep-border bg-dep-bg px-3 py-2 text-sm text-white">
+                    <label class="text-sm text-gray-400">Depósito destino</label>
+                    <select name="deposit_id" class="mt-1 w-full rounded-lg border border-dep-border bg-dep-bg px-3 py-2 text-sm text-white">
+                        <option value="">— Sin depósito —</option>
+                        @foreach($deposits as $d)
+                            <option value="{{ $d->id }}" @selected(old('deposit_id') == $d->id)>{{ $d->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
             <div class="sm:col-span-2">
@@ -73,7 +77,9 @@
                 <div class="autocomplete absolute z-10 mt-1 hidden max-h-40 w-full overflow-auto rounded border border-dep-border bg-dep-card shadow-lg"></div>
                 <div class="stock-hint mt-1 text-[10px] text-gray-500"></div>
             </td>
-            <td class="p-2"><input type="number" name="items[__IDX__][quantity]" min="1" required class="qty-out w-20 rounded border border-dep-border bg-dep-bg px-2 py-1 text-xs text-white"></td>
+            <td class="p-2">
+                <input type="number" step="0.001" name="items[__IDX__][quantity]" min="0.001" required class="qty-out w-24 rounded border border-dep-border bg-dep-bg px-2 py-1 text-xs text-white">
+            </td>
             <td class="p-2"><button type="button" class="btn-remove text-red-400">✕</button></td>
         </tr>
     </template>

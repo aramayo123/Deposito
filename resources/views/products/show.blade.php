@@ -51,7 +51,7 @@
                 <form action="{{ route('products.damaged', $product) }}" method="post" class="mt-2 flex flex-wrap items-end gap-2">
                     @csrf
                     @method('PATCH')
-                    <input type="number" name="damaged_quantity" min="0" value="{{ $product->damaged_quantity }}" class="rounded-lg border border-dep-border bg-dep-bg px-3 py-2 text-sm text-white">
+                    <input type="number" step="0.001" name="damaged_quantity" min="0" value="{{ $product->damaged_quantity }}" class="rounded-lg border border-dep-border bg-dep-bg px-3 py-2 text-sm text-white">
                     <button type="submit" id="btn-damaged" class="rounded-lg bg-amber-600 px-3 py-2 text-sm text-white">Confirmar</button>
                 </form>
             </div>

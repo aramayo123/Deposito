@@ -14,12 +14,12 @@ class EnsureProductHasSufficientStock
         $items = $request->input('items', []);
         foreach ($items as $i => $item) {
             $productId = (int) ($item['product_id'] ?? 0);
-            $qty = (int) ($item['quantity'] ?? 0);
-            if ($productId < 1 || $qty < 1) {
+            $qty = (float) ($item['quantity'] ?? 0);
+            if ($productId < 1 || $qty < 0.001) {
                 continue;
             }
             $product = Product::query()->select(['id', 'product_code', 'available_quantity'])->find($productId);
-            if ($product && $qty > (int) $product->available_quantity) {
+            if ($product && $qty > (float) $product->available_quantity) {
                 if ($request->expectsJson()) {
                     return response()->json([
                         'message' => 'Stock insuficiente.',

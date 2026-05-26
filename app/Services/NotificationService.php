@@ -17,8 +17,8 @@ class NotificationService
 
     public function syncStockAlertsAndDispatch(Product $product): void
     {
-        $available = (int) $product->available_quantity;
-        $minimum = (int) $product->minimum_stock;
+        $available = (float) $product->available_quantity;
+        $minimum = (float) $product->minimum_stock;
 
         if ($available > $minimum) {
             return;

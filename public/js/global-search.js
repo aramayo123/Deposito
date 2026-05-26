@@ -55,6 +55,26 @@
     const data = await r.json();
     out.innerHTML = "";
 
+    if (data.deposits?.length) {
+      const rows = data.deposits
+        .map(function (d) {
+          const created = d.created_at ? fmtDate(d.created_at) : "";
+          return (
+            "<li class='rounded-lg border border-dep-border/40 px-3 py-2'>" +
+            "<div class='flex flex-wrap items-baseline gap-x-2 gap-y-0'>" +
+            "<a class='font-medium text-blue-400 hover:underline' href='/deposits/" +
+            esc(d.id) +
+            "'>" +
+            esc(d.name) +
+            "</a>" +
+            (created ? "<span class='text-gray-500'>" + esc(created) + "</span>" : "") +
+            "</div></li>"
+          );
+        })
+        .join("");
+      sec("Depósitos", "<ul class='space-y-2 text-sm'>" + rows + "</ul>");
+    }
+
     if (data.products?.length) {
       const rows = data.products
         .map(function (p) {
@@ -128,15 +148,14 @@
               : "";
           const tech =
             x.is_for_workshop === true || x.is_for_workshop === 1
-              ? x.technician_name
-                ? "<span class='text-gray-500'>Técnico:</span> " +
-                  esc(x.technician_name)
-                : "<span class='text-gray-500'>Destino:</span> <span class='text-amber-300/90'>Taller</span>"
-              : "<span class='text-gray-500'>Técnico:</span> " +
-                esc(x.technician_name || "—");
-          const plate =
-            "<span class='text-gray-500'>Patente:</span> " +
-            esc(x.license_plate || "—");
+              ? "<span class='text-gray-500'>Destino:</span> <span class='text-amber-300/90'>Taller</span>"
+              : (x.technician_name
+                ? "<span class='text-gray-500'>Técnico:</span> " + esc(x.technician_name)
+                : "");
+          const depositName = x.deposit ? x.deposit.name : (x.deposit_name || "");
+          const depositLabel = depositName
+            ? "<span class='ml-2 text-emerald-300'>" + esc(depositName) + "</span>"
+            : "";
           const note = truncate(x.notes, 100);
           const noteHtml = note
             ? "<div class='mt-1 text-xs text-gray-500'>" + esc(note) + "</div>"
@@ -158,12 +177,9 @@
             esc(x.items_count) +
             " ítem(s)</span></div>" +
             "<div class='mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-300'>" +
-            "<span>" +
-            tech +
-            "</span>" +
-            "<span>" +
-            plate +
-            "</span></div>" +
+            (tech ? "<span>" + tech + "</span>" : "") +
+            (depositLabel ? "<span>Depósito: " + depositLabel + "</span>" : "") +
+            "</div>" +
             noteHtml +
             "</li>"
           );
@@ -190,18 +206,19 @@
               : code
                 ? esc(code) + (pname ? "<span class='text-gray-400'> — " + esc(pname) + "</span>" : "")
                 : "<span class='text-gray-500'>—</span>";
+          const depositName = h.deposit_name || (h.deposit ? h.deposit.name : "");
           const tech =
-            h.technician_name || h.license_plate
+            h.technician_name || depositName
               ? "<div class='mt-1 flex flex-wrap gap-x-3 gap-y-0 text-xs text-gray-400'>" +
                 (h.technician_name
                   ? "<span><span class='text-gray-500'>Técnico:</span> " +
                     esc(h.technician_name) +
                     "</span>"
                   : "") +
-                (h.license_plate
-                  ? "<span><span class='text-gray-500'>Patente:</span> " +
-                    esc(h.license_plate) +
-                    "</span>"
+                (depositName
+                  ? "<span><span class='text-gray-500'>Depósito:</span> <span class='text-emerald-300'>" +
+                    esc(depositName) +
+                    "</span></span>"
                   : "") +
                 "</div>"
               : "";

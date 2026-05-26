@@ -58,8 +58,8 @@
                 <div class="autocomplete absolute z-10 mt-1 hidden max-h-40 w-full overflow-auto rounded border border-dep-border bg-dep-card shadow-lg"></div>
                 <div class="stock-hint mt-1 text-[10px] text-gray-500"></div>
             </td>
-            <td class="p-2"><input type="number" name="items[__IDX__][quantity_received]" min="1" required class="w-20 rounded border border-dep-border bg-dep-bg px-2 py-1 text-xs text-white"></td>
-            <td class="p-2"><input type="number" name="items[__IDX__][quantity_damaged]" min="0" value="0" class="qty-damaged w-20 rounded border border-dep-border bg-dep-bg px-2 py-1 text-xs text-white"></td>
+            <td class="p-2"><input type="number" step="0.001" name="items[__IDX__][quantity_received]" min="0.001" required class="w-20 rounded border border-dep-border bg-dep-bg px-2 py-1 text-xs text-white"></td>
+            <td class="p-2"><input type="number" step="0.001" name="items[__IDX__][quantity_damaged]" min="0" value="0" class="qty-damaged w-20 rounded border border-dep-border bg-dep-bg px-2 py-1 text-xs text-white"></td>
             <td class="p-2">
                 <div class="damage-notes-wrap hidden deposito-transition opacity-0">
                     <input type="text" name="items[__IDX__][damage_notes]" class="w-full rounded border border-dep-border bg-dep-bg px-2 py-1 text-xs text-white" placeholder="Describir daño">

@@ -9,8 +9,8 @@
         @if($exit->is_for_workshop)
             <p class="mt-2"><span class="badge-pill bg-amber-500/20 text-amber-300">Uso del taller</span></p>
         @else
-            <p class="mt-2"><span class="text-gray-500">Técnico:</span> {{ $exit->technician_name }}</p>
-            <p><span class="text-gray-500">Patente:</span> {{ $exit->license_plate ?? '—' }}</p>
+            <p class="mt-2"><span class="text-gray-500">Técnico:</span> {{ $exit->technician_name ?? '—' }}</p>
+            <p><span class="text-gray-500">Depósito:</span> {{ $exit->deposit?->name ?? '—' }}</p>
         @endif
         @if($exit->notes)<p class="mt-2 text-gray-400">{{ $exit->notes }}</p>@endif
     </div>

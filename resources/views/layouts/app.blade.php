@@ -50,6 +50,9 @@
             <a href="{{ route('exits.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-white/5 deposito-transition {{ request()->routeIs('exits.*') ? 'bg-blue-600/20 text-blue-300' : 'text-gray-300' }}">
                 <span>↑</span> Salidas
             </a>
+            <a href="{{ route('deposits.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-white/5 deposito-transition {{ request()->routeIs('deposits.*') ? 'bg-blue-600/20 text-blue-300' : 'text-gray-300' }}">
+                <span>▣</span> Depósitos
+            </a>
             <a href="{{ route('reports.global') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-white/5 deposito-transition {{ request()->routeIs('reports.*') ? 'bg-blue-600/20 text-blue-300' : 'text-gray-300' }}">
                 <span>⌕</span> Búsqueda global
             </a>
