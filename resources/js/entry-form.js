@@ -37,7 +37,7 @@
           a.textContent = p.product_code + " — " + (p.name || "—");
           a.addEventListener("click", () => {
             hid.value = p.id;
-            search.value = p.product_code;
+            search.value = p.product_code + ' — ' + (p.name || '—');
             box.classList.add("hidden");
             tr.querySelector(".stock-hint").textContent =
               "Stock disp.: " + p.available_quantity;

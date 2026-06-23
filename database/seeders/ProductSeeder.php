@@ -33,15 +33,17 @@ class ProductSeeder extends Seeder
             $min = 5 + ($i % 8);
             $damaged = ($i % 6 === 0) ? (1 + ($i % 4)) : 0;
 
-            Product::query()->create([
-                'product_code' => $code,
-                'name' => $name,
-                'photo' => null,
-                'available_quantity' => $avail,
-                'damaged_quantity' => $damaged,
-                'minimum_stock' => $min,
-                'is_active' => true,
-            ]);
+            Product::query()->firstOrCreate(
+                ['product_code' => $code],
+                [
+                    'name' => $name,
+                    'photo' => null,
+                    'available_quantity' => $avail,
+                    'damaged_quantity' => $damaged,
+                    'minimum_stock' => $min,
+                    'is_active' => true,
+                ]
+            );
         }
     }
 }

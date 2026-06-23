@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(UserSeeder::class);
         $this->call(ProductSeeder::class);
 
         $depo1 = Deposit::query()->create(['name' => 'Taller Mecánico']);

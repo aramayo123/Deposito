@@ -69,11 +69,16 @@ class ProductExitController extends Controller
 
     public function store(StoreExitRequest $request): RedirectResponse|JsonResponse
     {
-        $exit = DB::transaction(function () use ($request) {
-            $data = $request->validated();
-            $items = $data['items'];
-            unset($data['items']);
+        $data = $request->validated();
+        $items = $data['items'];
+        unset($data['items']);
 
+        $processed = [];
+        $skipped = [];
+
+        DB::beginTransaction();
+
+        try {
             $exit = ProductExit::query()->create([
                 ...$data,
                 'technician_name' => $data['is_for_workshop'] ? null : ($data['technician_name'] ?? null),
@@ -81,9 +86,27 @@ class ProductExitController extends Controller
                 'created_by' => $request->input('created_by') ?: 'Sistema',
             ]);
 
+            $anyProcessed = false;
+
             foreach ($items as $row) {
                 $productId = (int) $row['product_id'];
                 $qty = (float) $row['quantity'];
+
+                $product = Product::query()->lockForUpdate()->findOrFail($productId);
+                $available = (float) $product->available_quantity;
+
+                $code = $product->product_code;
+                $name = $product->name;
+
+                if ($qty > $available) {
+                    $skipped[] = [
+                        'code' => $code,
+                        'name' => $name ?? '',
+                        'requested' => $qty,
+                        'available' => $available,
+                    ];
+                    continue;
+                }
 
                 ProductExitItem::query()->create([
                     'product_exit_id' => $exit->id,
@@ -91,13 +114,13 @@ class ProductExitController extends Controller
                     'quantity' => $qty,
                 ]);
 
-                $product = Product::query()->lockForUpdate()->findOrFail($productId);
-                $beforeA = (float) $product->available_quantity;
+                $beforeA = $available;
                 $afterA = $beforeA - $qty;
                 $product->update(['available_quantity' => $afterA]);
 
+                $product->refresh();
                 $this->historyService->recordExit(
-                    $product->fresh(),
+                    $product,
                     $exit->id,
                     $qty,
                     $beforeA,
@@ -105,11 +128,43 @@ class ProductExitController extends Controller
                     $exit->technician_name,
                     $exit->deposit_id,
                 );
-                $this->notificationService->syncStockAlertsAndDispatch($product->fresh());
+                $this->notificationService->syncStockAlertsAndDispatch($product);
+
+                $processed[] = [
+                    'code' => $code,
+                    'name' => $name ?? '',
+                    'quantity' => $qty,
+                ];
+
+                $anyProcessed = true;
             }
 
-            return $exit->load(['items.product', 'deposit']);
-        });
+            if (! $anyProcessed) {
+                DB::rollBack();
+
+                session()->flash('exit_skipped_all', $skipped);
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'message' => 'Ningún ítem tiene stock suficiente.',
+                        'processed' => [],
+                        'skipped' => $skipped,
+                    ], 422);
+                }
+
+                return redirect()->route('exits.create')
+                    ->with('exit_skipped_all', $skipped)
+                    ->with('error', 'Ningún ítem tiene stock suficiente. No se pudo registrar la salida.')
+                    ->withInput();
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        $exit->load(['items.product', 'deposit']);
 
         event(new ProductMovementEvent(
             'exit',
@@ -119,6 +174,9 @@ class ProductExitController extends Controller
         ));
 
         $this->notificationService->clearDashboardCache();
+
+        session()->flash('exit_processed', $processed);
+        session()->flash('exit_skipped', $skipped);
 
         if ($request->expectsJson()) {
             return (new ExitResource($exit))->response()->setStatusCode(201);

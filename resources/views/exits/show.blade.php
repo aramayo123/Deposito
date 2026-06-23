@@ -45,4 +45,21 @@
         </table>
     </div>
     <a href="{{ route('exits.index') }}" class="mt-4 inline-block text-sm text-blue-400 hover:underline">← Volver</a>
+
+    @if(session('exit_skipped'))
+        @push('scripts')
+        <script>
+            Swal.fire({
+                title: 'Resultado de la salida',
+                html: '{!! implode("", array_map(function($p) { return "<div style=\'color:#4ade80;margin:2px 0;text-align:left;font-size:13px;\'>✓ " . e($p["code"]) . " — " . e($p["name"]) . " (Cant: " . $p["quantity"] . ")</div>"; }, session('exit_processed', []))) !!}' +
+                      '{!! implode("", array_map(function($s) { return "<div style=\'color:#f87171;margin:2px 0;text-align:left;font-size:13px;\'>✗ " . e($s["code"]) . " — " . e($s["name"]) . " — Pide: " . $s["requested"] . " / Stock: " . $s["available"] . "</div>"; }, session('exit_skipped', []))) !!}',
+                icon: 'warning',
+                background: '#1c2030',
+                color: '#e5e7eb',
+                confirmButtonText: 'Entendido',
+                customClass: { popup: 'rounded-xl' }
+            });
+        </script>
+        @endpush
+    @endif
 @endsection

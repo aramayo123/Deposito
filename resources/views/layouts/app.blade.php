@@ -69,6 +69,9 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
+                <div class="hidden text-xs text-gray-400 sm:block">
+                    {{ Auth::user()->name ?? 'Usuario' }}
+                </div>
                 <div class="relative" id="notif-wrap">
                     <button type="button" id="notif-bell" class="relative rounded p-2 text-gray-300 hover:bg-white/5">
                         🔔
@@ -79,6 +82,10 @@
                         <ul id="notif-list" class="space-y-2"></ul>
                     </div>
                 </div>
+                <form action="{{ route('logout') }}" method="post" class="hidden sm:block">
+                    @csrf
+                    <button type="submit" class="rounded p-2 text-xs text-gray-400 hover:bg-white/5 hover:text-red-400">Salir</button>
+                </form>
                 <div class="hidden text-right text-xs text-gray-500 sm:block">
                     @stack('breadcrumb')
                 </div>

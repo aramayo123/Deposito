@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
 
 class StoreExitRequest extends FormRequest
 {
@@ -67,29 +65,5 @@ class StoreExitRequest extends FormRequest
         $v = $this->input('is_for_workshop');
         $workshop = in_array($v, [true, 1, '1', 'on', 'true'], true);
         $this->merge(['is_for_workshop' => $workshop]);
-    }
-
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator) {
-            $items = $this->input('items', []);
-            foreach ($items as $i => $item) {
-                $productId = (int) ($item['product_id'] ?? 0);
-                $qty = (float) ($item['quantity'] ?? 0);
-                if ($productId < 1 || $qty < 0.001) {
-                    continue;
-                }
-                $product = Product::query()->select(['id', 'product_code', 'available_quantity'])->find($productId);
-                if (! $product) {
-                    continue;
-                }
-                if ($qty > (float) $product->available_quantity) {
-                    $validator->errors()->add(
-                        "items.{$i}.quantity",
-                        'Stock insuficiente para '.($product->product_code ?? 'producto #'.$productId)
-                    );
-                }
-            }
-        });
     }
 }

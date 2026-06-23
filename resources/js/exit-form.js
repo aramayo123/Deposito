@@ -47,11 +47,12 @@
           a.textContent = p.product_code + " — " + (p.name || "—");
           a.addEventListener("click", () => {
             hid.value = p.id;
-            search.value = p.product_code;
+            search.value = p.product_code + ' — ' + (p.name || '—');
             box.classList.add("hidden");
             tr.dataset.max = String(p.available_quantity);
-            tr.querySelector(".stock-hint").textContent =
-              "Stock disp.: " + p.available_quantity;
+            tr.dataset.code = p.product_code;
+            tr.dataset.name = p.name || '';
+            updateStockHint(tr);
           });
           box.appendChild(a);
         });
@@ -59,14 +60,30 @@
       }, 300);
     });
     qty?.addEventListener("input", () => {
-      const max = parseFloat(tr.dataset.max || "0");
-      const v = parseFloat(qty.value) || 0;
-      if (max && v > max) {
-        qty.setCustomValidity("Supera stock disponible");
-      } else {
-        qty.setCustomValidity("");
-      }
+      updateStockHint(tr);
     });
+  }
+
+  function updateStockHint(tr) {
+    const max = parseFloat(tr.dataset.max || "0");
+    const qtyEl = tr.querySelector(".qty-out");
+    const v = parseFloat(qtyEl.value) || 0;
+    const hint = tr.querySelector(".stock-hint");
+    if (max > 0 && v > max) {
+      qtyEl.style.borderColor = "#ef4444";
+      qtyEl.style.color = "#fca5a5";
+      if (hint) hint.innerHTML = '<span style="color:#f87171;">⚠ Stock disp.: ' + max + ' (faltan ' + (v - max) + ')</span>';
+      qtyEl.setCustomValidity("");
+    } else if (max > 0) {
+      qtyEl.style.borderColor = "#22c55e";
+      qtyEl.style.color = "";
+      if (hint) hint.innerHTML = '<span style="color:#86efac;">✓ Stock disp.: ' + max + '</span>';
+      qtyEl.setCustomValidity("");
+    } else {
+      qtyEl.style.borderColor = "";
+      qtyEl.style.color = "";
+      if (hint) hint.textContent = '';
+    }
   }
 
   function addRow() {
@@ -89,8 +106,10 @@
         const data = j.data || j;
         const p = (Array.isArray(data) ? data : []).find((x) => String(x.id) === String(preset));
         if (p) {
-          first.querySelector(".product-search").value = p.product_code;
+          first.querySelector(".product-search").value = p.product_code + ' — ' + (p.name || '—');
           first.dataset.max = String(p.available_quantity);
+          first.dataset.code = p.product_code;
+          first.dataset.name = p.name || '';
           first.querySelector(".stock-hint").textContent = "Stock disp.: " + p.available_quantity;
         }
       });
