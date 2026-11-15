@@ -61,6 +61,7 @@ QUEUE_CONNECTION=database
 FILESYSTEM_DISK=public
 QUEUE_CRON_TOKEN=
 QUEUE_CRON_MAX_SECONDS=55
+SEEDERS_TOKEN=
 ```
 
 Valores típicos de Reverb (tras `php artisan reverb:install`):
@@ -169,6 +170,35 @@ Muchos hostings **no permiten** dejar `php artisan queue:work` corriendo 24/7. C
 **Importante:** la URL con token es sensible; no la compartas ni la subas a repositorios públicos. Rotá el token si se filtra.
 
 Seguís necesitando `QUEUE_CONNECTION=database` (o redis) y la tabla `jobs` migrada; esta ruta solo **sustituye** al worker permanente, no a la cola en sí.
+
+### Datos de demostración: ruta `GET /run-seeders`
+
+Los seeders generan datos con **Faker** para todos los modelos y relaciones del sistema (usuarios, depósitos, productos, entradas/ítems, salidas/ítems, historiales y alertas). Todas las fechas se calculan **al momento de ejecutar** el seeder y quedan dentro de los **últimos 6 meses**.
+
+La ruta ejecuta `migrate:fresh --seed`, por lo que **borra y vuelve a crear toda la base de datos**:
+
+```bash
+# Local / testing desde localhost (sin token)
+http://localhost:8000/run-seeders
+
+# Producción (definir SEEDERS_TOKEN en .env)
+https://TU-DOMINIO.com/run-seeders?token=TU_SECRETO
+```
+
+Si `SEEDERS_TOKEN` está vacío, la ruta solo funciona desde `127.0.0.1`/`::1` en `local`/`testing`; en cualquier otro caso responde **404**. Si el token está definido y no coincide responde **403**.
+
+Credenciales publicadas en `/login`:
+
+| Rol | Correo | Contraseña |
+|-----|--------|------------|
+| Administrador | `admin@deposito.com` | `admin123` |
+| Operador | `operador@deposito.com` | `operador123` |
+
+También se puede ejecutar desde consola:
+
+```bash
+php artisan migrate:fresh --seed
+```
 
 ### Tests: `MissingAppKeyException`
 

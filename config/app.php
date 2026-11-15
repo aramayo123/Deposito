@@ -137,4 +137,17 @@ return [
 
     'queue_cron_max_seconds' => (int) env('QUEUE_CRON_MAX_SECONDS', 55),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Seeders vía ruta (/run-seeders)
+    |--------------------------------------------------------------------------
+    |
+    | Si SEEDERS_TOKEN está vacío, la ruta solo se permite en local/testing.
+    | En producción definí un token y llamá /run-seeders?token=...
+    | La ruta ejecuta migrate:fresh --seed y borra todos los datos actuales.
+    |
+    */
+
+    'seeders_token' => env('SEEDERS_TOKEN'),
+
 ];

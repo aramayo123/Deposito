@@ -69,6 +69,24 @@
                 </button>
             </form>
 
+            <div class="mt-5 rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 text-sm">
+                <p class="font-medium text-blue-300">Credenciales de prueba</p>
+                <ul class="mt-2 space-y-1 text-gray-400">
+                    <li>
+                        Administrador:
+                        <code class="rounded bg-dep-bg px-1.5 py-0.5 text-gray-200">admin@deposito.com</code>
+                        /
+                        <code class="rounded bg-dep-bg px-1.5 py-0.5 text-gray-200">admin123</code>
+                    </li>
+                    <li>
+                        Operador:
+                        <code class="rounded bg-dep-bg px-1.5 py-0.5 text-gray-200">operador@deposito.com</code>
+                        /
+                        <code class="rounded bg-dep-bg px-1.5 py-0.5 text-gray-200">operador123</code>
+                    </li>
+                </ul>
+            </div>
+
             <p class="mt-4 text-center text-sm text-gray-500">
                 ¿No tenés cuenta? <a href="{{ route('register') }}" class="text-blue-400 hover:underline">Registrate</a>
             </p>

@@ -4,14 +4,16 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepositController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\RunQueuedJobsController;
 use App\Http\Controllers\ProductEntryController;
 use App\Http\Controllers\ProductExitController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RunQueuedJobsController;
+use App\Http\Controllers\RunSeedersController;
 use App\Http\Controllers\StockAlertController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/run-queue', RunQueuedJobsController::class)->name('queue.run-cron');
+Route::get('/run-seeders', RunSeedersController::class)->name('seeders.run');
 
 Route::redirect('/', '/dashboard');
 
